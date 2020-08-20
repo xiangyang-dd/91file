@@ -49,7 +49,10 @@ def picture(urldata,headers):
             if not os.path.exists('D:\\2\\91图片\\' + str(filename)):
                 os.mkdir('D:\\2\\91图片\\' + str(filename))
             print('正在下载第{}张图片'.format(i))
-            r = requests.get(url=url,headers=headers)
+            try:
+                r = requests.get(url=url, headers=headers)
+            except ZeroDivisionError:
+                continue
             time.sleep(1)
             name='{}.{}'.format(i,ext)
             with open('D:\\2\\91图片\\'+filename+'\\'+'{}'.format(name), 'wb') as f:
