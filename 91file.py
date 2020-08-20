@@ -7,8 +7,8 @@ import time
 import os
 from bs4 import BeautifulSoup
 def fileurl(urls):
-    if urls ==''
-    exit()
+    if urls =='':
+        return print('请输入域名！')
     Current=1
     Total=991
     HomePage =urls
