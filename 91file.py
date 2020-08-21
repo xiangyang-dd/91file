@@ -8,7 +8,7 @@ import os
 from bs4 import BeautifulSoup
 def fileurl(urls):
     if urls =='':
-        return print('请输入域名！')
+        return print('Error！ 请输入域名！')
     Current=1
     Total=991
     HomePage =urls
@@ -26,17 +26,21 @@ def fileurl(urls):
             link = response.content.decode("utf-8")
             soup = BeautifulSoup(link, 'html.parser')
             div = soup.find('div', attrs={"id": "threadtitle"})
-            filename = str(div.find('h1').string.replace(' ', '').replace('【', '').replace('】', '').replace('~', '').replace('/',''))
-            if not os.path.exists('D:\\2\\91图片\\' + str(filename)):
-                picture(urldata,headers)
+            filepath='D:\\2\\91图片\\'
+            try:
+                filename = str(div.find('h1').string.replace(' ', '').replace('【', '').replace('】', '').replace('~', '').replace('/','').replace('.','').replace(':',''))
+            except  Exception as e:
+                continue
+            if not os.path.exists(filepath + str(filename)):
+                picture(urldata,headers,filepath)
         time.sleep(0.2)
         Current+=1
-def picture(urldata,headers):
+def picture(urldata,headers,filepath):
     response = requests.get(url=urldata, headers=headers)
     link = response.content.decode("utf-8")
     soup=BeautifulSoup(link,'html.parser')
     div=soup.find('div', attrs={"id": "threadtitle"})
-    filename=str(div.find('h1').string.replace(' ','').replace('【','').replace('】','').replace('~','').replace('/',''))
+    filename=str(div.find('h1').string.replace(' ','').replace('【','').replace('】','').replace('~','').replace('/','').replace('.','').replace(':',''))
     if 'jpg'or'jpeg'or'gif' in link:
         id = re.findall(r'file="(.*?)"', link, re.I)
         pic=len(id)
@@ -46,19 +50,20 @@ def picture(urldata,headers):
             ext = url.split('.')[-1]
             if pic == 0:
                 continue
-            if not os.path.exists('D:\\2\\91图片\\' + str(filename)):
-                os.mkdir('D:\\2\\91图片\\' + str(filename))
+            if not os.path.exists(filepath + str(filename)):
+                os.mkdir(filepath + str(filename))
             print('正在下载第{}张图片'.format(i))
             try:
-                r = requests.get(url=url, headers=headers)
-            except ZeroDivisionError:
+                r = requests.get(url=url,headers=headers)
+                r.close()
+            except Exception as e:
                 continue
             time.sleep(1)
             name='{}.{}'.format(i,ext)
-            with open('D:\\2\\91图片\\'+filename+'\\'+'{}'.format(name), 'wb') as f:
+            with open(filepath+filename+'\\'+'{}'.format(name), 'wb') as f:
                 f.write(r.content)
             i+=1
         print('提示！！！  {}  下载结束! 准备下载下一个！！！'.format(filename))
 if __name__ == '__main__':
-    HomePage =''   #输入url以/结束
+    HomePage =''  #输入91的域名如https://www.baidu.com/
     fileurl(HomePage)
