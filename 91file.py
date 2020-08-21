@@ -6,11 +6,12 @@ import re
 import time
 import os
 from bs4 import BeautifulSoup
+
 def fileurl(urls):
     if urls =='':
         return print('Error！ 请输入域名！')
-    Current=1
-    Total=991
+    Current=30
+    Total=100
     HomePage =urls
     headers = {
             'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
@@ -26,21 +27,20 @@ def fileurl(urls):
             link = response.content.decode("utf-8")
             soup = BeautifulSoup(link, 'html.parser')
             div = soup.find('div', attrs={"id": "threadtitle"})
-            filepath='D:\\2\\91图片\\'
+            filepath='G:\\2\\91图片\\'
             try:
-                filename = str(div.find('h1').string.replace(' ', '').replace('【', '').replace('】', '').replace('~', '').replace('/','').replace('.','').replace(':',''))
+                filename = str(div.find('h1').string.translate ({ord(c): "" for c in "@#$%^&*[];:,./<>?\|`~【】「」"}))
             except  Exception as e:
                 continue
             if not os.path.exists(filepath + str(filename)):
-                picture(urldata,headers,filepath)
+                picture(urldata,headers,filepath,filename)
         time.sleep(0.2)
         Current+=1
-def picture(urldata,headers,filepath):
+def picture(urldata,headers,filepath,filename):
     response = requests.get(url=urldata, headers=headers)
     link = response.content.decode("utf-8")
     soup=BeautifulSoup(link,'html.parser')
     div=soup.find('div', attrs={"id": "threadtitle"})
-    filename=str(div.find('h1').string.replace(' ','').replace('【','').replace('】','').replace('~','').replace('/','').replace('.','').replace(':',''))
     if 'jpg'or'jpeg'or'gif' in link:
         id = re.findall(r'file="(.*?)"', link, re.I)
         pic=len(id)
@@ -64,6 +64,7 @@ def picture(urldata,headers,filepath):
                 f.write(r.content)
             i+=1
         print('提示！！！  {}  下载结束! 准备下载下一个！！！'.format(filename))
+
 if __name__ == '__main__':
     HomePage =''  #输入91的域名如https://www.baidu.com/
     fileurl(HomePage)
