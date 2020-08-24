@@ -83,6 +83,6 @@ def picture(urldata, headers, filepath, filename, Current):
             i += 1
         print('提示！！！  {}  下载结束! 准备下载下一个！！！'.format(filename))
 if __name__ == '__main__':
-    path = 'G:\\2\\91图片\\'   #设置下载路径如'G:\\2\\91图片\\'
-    HomePage = 'http://f1022.wonderfulday27.live/' #输入91的域名如https://www.baidu.com/
+    path = ''   #设置下载路径如'G:\\2\\91图片\\'
+    HomePage = '' #输入91的域名如https://www.baidu.com/
     fileurl(HomePage, path)
