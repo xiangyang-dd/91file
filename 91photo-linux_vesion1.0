@@ -1,0 +1,107 @@
+#____author:"xie"
+#date:2020-09-11
+# -*- coding: utf-8 -*-
+import requests
+import re
+import time
+import os
+from bs4 import BeautifulSoup
+from multiprocessing import Pool
+from requests.adapters import HTTPAdapter
+time_date = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+req = requests.Session()
+req.mount('http://', HTTPAdapter(max_retries=3))
+req.mount('https://', HTTPAdapter(max_retries=3))
+def fileurl(urls):
+    if urls  == '':
+        return print('Error！ 请输入域名！或下载路径！')
+    path = ''   #设置下载路径如'G:\\2\\91图片\\'
+    HomePage = ''  # 输入91的域名如https://www.baidu.com
+    headers = {
+            'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+          }
+    Current = urls.split('&')[-1]
+    Current = str(Current).replace('page=','')
+    print('------------------------------------当前处理页为{}!------------------------------------'.format(Current))
+    url = urls
+    try:
+        response = req.get(url=url, headers=headers, timeout=300)
+        response.close()
+    except Exception as e:
+        data = '{}超时稍后重试列表url：'.format(time_date) + url
+        with open(path+'超时重试.txt', 'a') as file_handle:
+            file_handle.write("{}\n".format(data))
+    link = response.content.decode("utf-8")
+    id = re.findall(r'span id="thread_(.*?)"', link, re.I)
+    for imt in id:
+        urldata = HomePage+'viewthread.php?tid={}'.format(imt)
+        try:
+            response = req.get(url=urldata, headers=headers, timeout=300)
+            response.close()
+        except Exception as e:
+            data = '采集日期：{}超时稍后重试列表url：'.format(time_date) + url
+            with open(path + '超时重试.txt', 'a') as file_handle:
+                file_handle.write("{}\n".format(data))
+            continue
+        link = response.content.decode("utf-8")
+        soup = BeautifulSoup(link, 'html.parser')
+        div = soup.find('div', attrs={"id": "threadtitle"})
+        filepath = path
+        try:
+            filename = str(div.find('h1').string.replace(' ', '').replace("\x08",'').translate({ord(c): "" for c in '@#$%^&*[];":,./<>?\|`~【】「」'}))
+        except Exception as e:
+            continue
+        if not os.path.exists(filepath + str(filename)):
+            try:
+                response = req.get(url=urldata, headers=headers, timeout=300)
+                response.close()
+            except Exception as e:
+                data = '采集日期：{} 当前第{}页，超时重试详情url：{}'.format(time_date, Current, urldata) + filename
+                with open(path + '超时重试.txt', 'a') as file_handle:
+                    file_handle.write("{}\n".format(data))
+            link = response.content.decode("utf-8")
+            if 'jpg' or 'jpeg' or 'gif' in link:
+                picture(link, headers, filepath, filename, Current)
+    time.sleep(0.2)
+def picture(link,headers,filepath,filename,Current):
+        id = re.findall(r'file="(.*?)"', link, re.I)
+        pic = len(id)
+        print('===={}==== 共有{}张图片下载---------------当前处理第{}页-------------'.format(filename, pic, Current))
+        i = 1
+        for url in id:
+            ext = url.split('.')[-1]
+            # ext = os.path.splitext(url)[1]  #os的获取url后缀名包括点
+            if pic == 0:
+                continue
+            if not os.path.exists(filepath + str(filename)):
+                os.mkdir(filepath + str(filename))
+            print('正在下载第{}张图片'.format(i))
+            try:
+                r = req.get(url=url, headers=headers, timeout=700)
+                r.close()
+            except Exception as e:
+                data = '采集日期：{} 超时稍后重试列表url当前第{}页：'.format(time_date, Current)+filename+url
+                with open(path + '超时重试.txt', 'a') as file_handle:
+                    file_handle.write("{}\n".format(data))
+                continue
+            time.sleep(1)
+            name = '{}.{}'.format(i, ext)
+            with open(filepath+filename+'/'+'{}'.format(name), 'wb') as f:
+                f.write(r.content)
+            i += 1
+        print('提示！！！  {}  下载结束! 准备下载下一个！！！'.format(filename))
+
+if __name__ == '__main__':
+    path = ''   #设置下载路径如'G:\\2\\91图片\\'
+    HomePage = ''  #输入91的域名如https://www.baidu.com/
+    pool = Pool(processes=10)
+    tot_page = []
+    for i in range(1,11):
+        url = HomePage+'forumdisplay.php?fid=19&page='+'{}'.format(i)
+        tot_page.append(url)
+    pool.map(fileurl, tot_page)  # 多线程工作
+    pool.close()
+    pool.join()
+    os.system('/bin/bash /home/shell/scan.sh &')
+    print('爬取图片完成！')
+
